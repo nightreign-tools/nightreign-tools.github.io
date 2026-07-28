@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ナイトレイン 商人ラインナップ早見表</title>
+<style>
+  :root{
+    --gold:#c9a24b; --gold-dim:#8a7238; --bg:#0b0c10; --panel:#16171e;
+    --red:#b5423a; --blue:#3c6e9e; --green:#4d8a5f; --text:#e9e4d8; --text-dim:#8a8578; --line:#262832;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:radial-gradient(ellipse at 50% 0%, #1b1c22 0%, var(--bg) 60%);color:var(--text);font-family:"Hiragino Mincho ProN","Yu Mincho",serif;}
+  .wrap{max-width:480px;margin:0 auto;padding:14px 12px 50px;}
+  h1{font-size:0.95rem;letter-spacing:0.12em;color:var(--gold);font-weight:500;margin:4px 0 2px;text-align:center;}
+  .sub{font-size:0.68rem;color:var(--text-dim);letter-spacing:0.05em;margin-bottom:14px;text-align:center;line-height:1.6;}
+
+  .search-bar{
+    position:sticky;top:0;z-index:10;
+    background:var(--bg);
+    padding:8px 0 10px;
+  }
+  .search-bar input{
+    width:100%;
+    padding:14px 14px;
+    font-size:1rem;
+    background:#14151b;
+    border:1px solid var(--gold-dim);
+    border-radius:6px;
+    color:var(--text);
+    font-family:inherit;
+  }
+  .search-bar input::placeholder{color:var(--text-dim);}
+  .hint{font-size:0.64rem;color:var(--text-dim);text-align:center;margin-bottom:10px;}
+
+  .item-list{display:flex;flex-direction:column;gap:8px;}
+  .item{
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--panel);
+    overflow:hidden;
+  }
+  .item-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px 14px;
+    cursor:pointer;
+    min-height:52px;
+  }
+  .item-name{flex:1;font-size:0.88rem;color:var(--text);letter-spacing:0.02em;line-height:1.4;}
+  .chevron{color:var(--text-dim);font-size:0.9rem;transition:transform 0.2s;flex-shrink:0;}
+  .item.open .chevron{transform:rotate(90deg);color:var(--gold);}
+
+  .item-body{
+    display:none;
+    padding:0 14px 16px;
+    border-top:1px solid var(--line);
+  }
+  .item.open .item-body{display:block;}
+  .body-section{margin-top:12px;}
+  .body-label{
+    font-size:0.68rem;
+    letter-spacing:0.08em;
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .body-label.shop{color:var(--blue);}
+  .body-label.village{color:var(--green);}
+  .body-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px;}
+  .body-list li{
+    font-size:0.78rem;
+    color:var(--text);
+    background:#0f1015;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:8px 10px;
+    line-height:1.5;
+  }
+  .no-results{text-align:center;color:var(--text-dim);font-size:0.78rem;padding:30px 0;}
+
+  .note{font-size:0.64rem;color:#565247;text-align:center;margin-top:20px;line-height:1.8;letter-spacing:0.02em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>商人ラインナップ早見表</h1>
+  <div class="sub">通常商人のレア武器（4万2000ルーン）から<br>村の商人ラインナップを予測</div>
+
+  <div class="search-bar">
+    <input type="text" id="searchBox" placeholder="レア武器名を入力 or 下から選択" autocomplete="off">
+  </div>
+  <div class="hint">通常商人が売っているレア武器（紫）の名前をタップ／検索してください</div>
+
+  <div class="item-list" id="itemList"></div>
+  <div class="no-results" id="noResults" style="display:none;">一致するレア武器が見つかりません</div>
+
+  <div class="note">
+    パターンは通常商人が売る「レア武器（42000ルーン）」の種類で識別されます。実際のラインナップは変動・誤差の可能性があるため、目安としてご利用ください。
+  </div>
+</div>
+
+<script>
+(function(){
+  const READING = {
+    "シルリアの樹槍（輝剣生成）":"しるりあのじゅそう1",
+    "シルリアの樹槍（瓶回復）":"しるりあのじゅそう2",
+    "熔岩刀":"ようがんとう",
+    "百智の王笏":"ひゃくちのおうしゃく",
+    "トリーナの剣":"とりーなのつるぎ",
+    "儀杖の直剣":"ぎじょうのちょっけん",
+    "血のヘリケー":"ちのへりけー",
+    "冷たい氷殻斧":"つめたいひょうかくふ",
+    "翼の鎌":"つばさのかま",
+    "光輪のサイス":"こうりんのさいす",
+    "王家のグレートソード":"おうけのぐれーとそーど",
+    "貴腐騎士の槍":"きふきしのやり",
+    "シルリアの樹槍（属性+6%）":"しるりあのじゅそう3",
+    "ガーゴイルの黒両刃":"がーごいるのくろりょうば",
+    "冷たい猛禽鍵爪":"つめたいもうきんかぎづめ",
+    "縋りつく手骨":"すがりつくてぼね",
+    "秘文字の剣":"ひもじのつるぎ",
+    "ヴァイクの戦槍":"ゔぁいくのせんそう",
+    "黒王の大剣":"こくおうのだいけん",
+    "溶岩鞭の燭台":"ようがんべんのしょくだい",
+    "秘文字のパタ":"ひもじのぱた"
+  };
+
+  const PATTERNS = [
+    {no:0, weapon:"シルリアの樹槍（輝剣生成）", rating:"C",
+      shop:["カーリアの輝剣杖（詠唱速度付き）","毒のパルチザン（二刀持ち付帯）"],
+      village:["長牙（戦技+18%・扱いやすい2連切り）"]},
+    {no:1, weapon:"シルリアの樹槍（瓶回復）", rating:"B",
+      shop:["ツヴァイヘンダー（最大カット24%）"],
+      village:["屍山血河（戦技+21%、ボスを選ぶがファーム向き）","巨人の聖印（狙われにくい-9）","アズールの輝石杖（詠唱速度+2、ほうき星付き）"]},
+    {no:2, weapon:"熔岩刀", rating:"C",
+      shop:["溶岩刀（雷カット率と噛み合わずやや微妙）","両手持ち付帯の武器が中心"],
+      village:["司教大炎槌（戦技+21%）","ルーサット（ハイマの砲丸付き）","術師・両手持ちキャラ向けだが汎用性は低め"]},
+    {no:3, weapon:"百智の王笏", rating:"B",
+      shop:["グロスメッサー（聖律・戦技+18%、1人1個推奨）"],
+      village:["黄金樹の弓（射撃+14%）","隕石の杖（星砕き付き）","爪痕の聖印（獣の石/グラングの岩）※アンコモン販売中心"]},
+    {no:4, weapon:"トリーナの剣", rating:"D",
+      shop:["神聖なパイク（最大時攻撃力+10%）程度で通常販売は弱め"],
+      village:["クレプスの黒鍵（戦技+18%）","ルーサット杖（ハイマ付き）","黄銅短刀（連続カット・血の刃付き）"]},
+    {no:5, weapon:"儀杖の直剣", rating:"A",
+      shop:["大鎌（炎撃付き）","鉈（雷撃斬付き）など属性武器が充実"],
+      village:["蟻棘レイピア（雷属性、戦技+21%）","獣爪の大槌（戦技+21%）※戦技+21%が2つある唯一のパターン","輝石のクリス（汎用性高い）"]},
+    {no:6, weapon:"血のヘリケー", rating:"D",
+      shop:["ツリースピア（聖律付き）程度で通常販売はかなり弱め"],
+      village:["最大時攻撃力上昇の武器が2つ","隕鉄の刀（2連切り・最大時+10%）"]},
+    {no:7, weapon:"冷たい氷殻斧", rating:"A",
+      shop:["カーリア杖（属性+6%・最大攻撃10%の複合、最強格）","氷殻斧（戦技+21%、霜踏み付き）"],
+      village:["隕鉄の刀（最大時+10%）","結晶杖（隠者向け）","黄金律特化向けの聖印"]},
+    {no:8, weapon:"翼の鎌", rating:"S",
+      shop:["冷たい死体漁り曲剣","しろがね杖（魔力+9%、初期隠者杖の完全上位互換）","盾（パリィ、最大カット32%）","アンコモンに戦技+18%が2つ","竜鱗刀（レア、戦技+21%・消費FP軽減）"],
+      village:["店売りが非常に充実しているパターンで、村に寄れなくても戦技付帯を大量に確保できる"]},
+    {no:9, weapon:"光輪のサイス", rating:"S",
+      shop:["光輪のサイス（聖弱点の王にはこれでほぼ勝てる）","爪痕の聖印（戦技付帯付き）"],
+      village:["隕鉄の刀（牙突&戦技+18%）","血の蟻棘レイピア（戦技+21%）","チンクエディア（祈祷+11%・物理+8%、3本揃うと復讐者火力+72%目安）"]},
+    {no:10, weapon:"王家のグレートソード", rating:"C",
+      shop:["巨人の聖印、アンコモンの被ダメカット程度で通常販売は見どころ少なめ"],
+      village:["魔力のロジェール刺剣（属性+6%・戦技+18%の複合）"]},
+    {no:11, weapon:"貴腐騎士の槍", rating:"S",
+      shop:["棘球拳（連続カット＆炎撃付き）","鉈（霜踏み付き）","大鎌（剣舞付き）※ほぼ完璧な販売テーブル"],
+      village:["神聖なモーニングスター（最大カット32%）","赤木のショートボウ（戦技付き）","カーリア杖（速剣＆アデューラ）","屍山血河（炎+12%）※店・村ともに非常に贅沢"]},
+    {no:12, weapon:"シルリアの樹槍（属性+6%）", rating:"B",
+      shop:["ラージレザーシールド（最大攻撃+10）","最大カット・戦技+18%・戦技+21%が一通り揃う"],
+      village:["3つあるシルリア系パターンの中では属性攻撃が付いている分、最も無駄になりにくい"]},
+    {no:13, weapon:"ガーゴイルの黒両刃", rating:"B",
+      shop:["ブラックレザーシールド（戦技+18%）","しろがね弓（戦技付き）","黄金樹の弓（アロレ&射撃+14%）※弓に戦技付帯が多い"],
+      village:["有効属性の戦技が引ければ強力"]},
+    {no:14, weapon:"冷たい猛禽鍵爪", rating:"C",
+      shop:["嵐の刃付き直剣程度で店売りは魅力薄"],
+      village:["巨人の聖印（タメ強化&FP付帯）","クラゲ盾（祈祷+11%、左手向き）","名刀月隠（戦技+21%）","黄金樹の大弓（戦技は貫通射撃）※祈祷推しの珍しいラインナップ"]},
+    {no:15, weapon:"縋りつく手骨", rating:"C",
+      shop:["神聖なフレイル（属性付き）","泥人槍（炎撃付き）※店売りは貧弱"],
+      village:["使者たちの笛（戦技付帯）","炎の祝祭大頭蓋（アンコモン）","月輪の弩（狙われにくい-9、リブラ/ハルモニア戦向き）"]},
+    {no:16, weapon:"秘文字の剣", rating:"C",
+      shop:["長牙（連続カット・物理8%・剣舞付き）","炎の祝祭大頭蓋（戦技付き）","巨人の聖印（最大カット付き）"],
+      village:["レア武器自体は聖弱点ボス時の聖+12%目当てで買うか程度"]},
+    {no:17, weapon:"ヴァイクの戦槍", rating:"A",
+      shop:["雷のハイランドアクス（戦技+18%）","冷たいウルミ（最大攻撃・霜踏み）","大盾（最大カット付き）","爪痕（獣の生命付き）※店売りが非常にリッチ"],
+      village:["バリスタ（狙われにくい-9）","結晶杖","フランベルジュ（炎撃付き）","尊顔の燭台（被ダメカット、稀に-2）※店売りに比べるとやや弱め"]},
+    {no:18, weapon:"黒王の大剣", rating:"D",
+      shop:["発見力上昇・撃破時回復など実用性の低いラインナップ中心"],
+      village:["輝石のクリス（撃破時回復+20付き）程度","火力付帯がほぼ無く、両手持ち・タメ強化偏重で汎用性が低い"]},
+    {no:19, weapon:"溶岩鞭の燭台", rating:"C（ボスによりB）",
+      shop:["溶岩鞭（炎+12%）","猟犬の長牙（ジャンプ強化+物理、鍛えてメイン武器候補）","歪み斧（最大カット付き、聖杯瓶ダウンのデメリットあり）"],
+      village:["氷結の針（最大カット+40%、刺突カウンター&霜踏み）※全21パターン中唯一の最大カット+40%武器"]},
+    {no:20, weapon:"秘文字のパタ", rating:"B",
+      shop:["蝕紋の大盾（最大カット、戦技なしでマストバイ級）","ツリースピア（聖律付き）","パタ（聖+12%）"],
+      village:["しろがね杖（最大攻撃10%、隠者向け）","レドゥビア（戦技+21%）","オルドビス（最大攻撃14%・タメ聖付き）※メイン武器としては一歩劣る"]}
+  ];
+
+  const $ = id => document.getElementById(id);
+  const itemList = $("itemList");
+  const searchBox = $("searchBox");
+  const noResults = $("noResults");
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+  let openNo = null;
+
+  function render(filterText){
+    const q = (filterText||"").trim();
+    const filtered = PATTERNS
+      .filter(p => !q || p.weapon.includes(q))
+      .slice()
+      .sort((a,b) => (READING[a.weapon]||a.weapon).localeCompare(READING[b.weapon]||b.weapon, "ja"));
+    if(!filtered.length){
+      itemList.innerHTML = "";
+      noResults.style.display = "block";
+      return;
+    }
+    noResults.style.display = "none";
+    itemList.innerHTML = filtered.map(p=>{
+      const isOpen = openNo === p.no;
+      let html = '<div class="item'+(isOpen?' open':'')+'" data-no="'+p.no+'">';
+      html += '<div class="item-head" data-toggle="'+p.no+'">';
+      html += '<div class="item-name">'+escapeHtml(p.weapon)+'</div>';
+      html += '<div class="chevron">▶</div>';
+      html += '</div>';
+      if(isOpen){
+        html += '<div class="item-body">';
+        html += '<div class="body-section"><div class="body-label shop">■ 店売り（通常商人）の見どころ</div><ul class="body-list">'+p.shop.map(s=>'<li>'+escapeHtml(s)+'</li>').join("")+'</ul></div>';
+        html += '<div class="body-section"><div class="body-label village">■ 村売り（村の商人）の見どころ</div><ul class="body-list">'+p.village.map(s=>'<li>'+escapeHtml(s)+'</li>').join("")+'</ul></div>';
+        html += '</div>';
+      }
+      html += '</div>';
+      return html;
+    }).join("");
+
+    itemList.querySelectorAll("[data-toggle]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const no = parseInt(el.getAttribute("data-toggle"),10);
+        openNo = (openNo === no) ? null : no;
+        render(searchBox.value);
+        if(openNo !== null){
+          requestAnimationFrame(()=>{
+            const openEl = itemList.querySelector('.item[data-no="'+openNo+'"]');
+            if(openEl) openEl.scrollIntoView({behavior:"smooth", block:"start"});
+          });
+        }
+      });
+    });
+  }
+
+  searchBox.addEventListener("input", ()=>{
+    render(searchBox.value);
+  });
+
+  render("");
+})();
+</script>
+</body>
+</html>
