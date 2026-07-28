@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ナイトレイン 周回ログ</title>
+<style>
+  :root{
+    --gold:#c9a24b;
+    --gold-dim:#8a7238;
+    --bg:#0b0c10;
+    --bg2:#14151b;
+    --panel:#16171e;
+    --red:#b5423a;
+    --green:#4d8a5f;
+    --text:#e9e4d8;
+    --text-dim:#8a8578;
+    --line:#262832;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:radial-gradient(ellipse at 50% 0%, #1b1c22 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px;}
+  h1{font-size:1.05rem;letter-spacing:0.15em;color:var(--gold);font-weight:500;margin:6px 0 2px;text-align:center;}
+  .sub{font-size:0.72rem;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:22px;text-align:center;}
+  h2{font-size:0.85rem;letter-spacing:0.1em;color:var(--gold);font-weight:500;margin:0 0 12px;border-left:3px solid var(--gold-dim);padding-left:10px;}
+  section{margin-bottom:28px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:16px;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+  .grid .full{grid-column:1/-1;}
+  label{display:block;font-size:0.68rem;color:var(--text-dim);letter-spacing:0.05em;margin-bottom:4px;}
+  select,input[type=text],input[type=date],input[type=number],textarea{
+    width:100%;
+    padding:8px 9px;
+    background:#0f1015;
+    border:1px solid var(--line);
+    border-radius:2px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:0.82rem;
+  }
+  input[type=date]{
+    color-scheme:dark;
+    cursor:pointer;
+  }
+  input[type=date]::-webkit-calendar-picker-indicator{
+    filter:invert(0.75) sepia(0.4) saturate(3) hue-rotate(360deg);
+    cursor:pointer;
+  }
+  textarea{resize:vertical;min-height:44px;}
+  .field{margin-bottom:2px;}
+  .btnrow{display:flex;gap:10px;margin-top:14px;}
+  button{
+    padding:10px 14px;
+    font-size:0.8rem;
+    letter-spacing:0.08em;
+    border-radius:2px;
+    border:1px solid var(--gold-dim);
+    background:transparent;
+    color:var(--gold);
+    font-family:inherit;
+    cursor:pointer;
+  }
+  button.primary{background:var(--gold);color:#141118;border-color:var(--gold);}
+  button.danger{border-color:#5a3a38;color:#c98d87;}
+  button.small{padding:4px 8px;font-size:0.68rem;}
+  button:active{opacity:0.7;}
+
+  .stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+  .stat-card{background:#0f1015;border:1px solid var(--line);border-radius:3px;padding:10px 8px;text-align:center;}
+  .stat-card .num{font-size:1.3rem;color:var(--gold);font-variant-numeric:tabular-nums;}
+  .stat-card .lbl{font-size:0.62rem;color:var(--text-dim);letter-spacing:0.05em;margin-top:2px;}
+
+  table{width:100%;border-collapse:collapse;font-size:0.72rem;}
+  th,td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;}
+  th{color:var(--text-dim);font-weight:500;letter-spacing:0.04em;}
+  td{color:var(--text);}
+  .breakdown-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){
+    .grid{grid-template-columns:1fr;}
+    .stat-cards{grid-template-columns:repeat(2,1fr);}
+    .breakdown-wrap{grid-template-columns:1fr;}
+  }
+
+  .runs-table-wrap{overflow-x:auto;}
+  .runs-table-wrap table{min-width:720px;}
+  .tag-win{color:var(--green);}
+  .tag-lose{color:var(--red);}
+  .rowbtns{display:flex;gap:4px;}
+  .empty-note{font-size:0.75rem;color:var(--text-dim);text-align:center;padding:14px 0;}
+  .note{font-size:0.68rem;color:#565247;text-align:center;margin-top:18px;line-height:1.7;letter-spacing:0.03em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>NIGHTREIGN RUN LOG</h1>
+  <div class="sub">周回ログ・成績トラッカー</div>
+
+  <section>
+    <h2 id="formTitle">周回を記録する</h2>
+    <div class="grid">
+      <div class="field">
+        <label>日付</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="field">
+        <label>キャラクター</label>
+        <select id="fChar"></select>
+      </div>
+      <div class="field">
+        <label>パーティ人数</label>
+        <select id="fParty">
+          <option value="ソロ">ソロ</option>
+          <option value="2人">2人</option>
+          <option value="3人" selected>3人</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>結果</label>
+        <select id="fResult">
+          <option value="Day1敗北">Day1で敗北</option>
+          <option value="Day2敗北">Day2で敗北</option>
+          <option value="Day3敗北">Day3で敗北（夜の王撃破ならず）</option>
+          <option value="クリア" selected>クリア（夜の王撃破）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>対戦した夜の王</label>
+        <select id="fBoss"></select>
+      </div>
+      <div class="field">
+        <label>最終レベル</label>
+        <select id="fLevel"></select>
+      </div>
+      <div class="field">
+        <label>クリアタイム（分:秒）</label>
+        <input type="text" id="fTime" placeholder="例: 27:40">
+      </div>
+      <div class="field">
+        <label>遺物1 / 遺物2 / 遺物3</label>
+        <input type="text" id="fRelics" placeholder="カンマ区切りで入力">
+      </div>
+      <div class="field full">
+        <label>メモ（死因・立ち回りなど）</label>
+        <textarea id="fNotes" placeholder="例: 第2形態の即死攻撃を避けきれず被弾"></textarea>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="primary" id="btnSave">この内容で記録する</button>
+      <button id="btnClearForm">フォームをクリア</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>集計</h2>
+    <div class="stat-cards">
+      <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">総周回数</div></div>
+      <div class="stat-card"><div class="num" id="statClear">0</div><div class="lbl">クリア数</div></div>
+      <div class="stat-card"><div class="num" id="statRate">-</div><div class="lbl">クリア率</div></div>
+      <div class="stat-card"><div class="num" id="statAvgTime">-</div><div class="lbl">平均クリアタイム</div></div>
+    </div>
+    <div class="breakdown-wrap">
+      <div>
+        <h2 style="font-size:0.75rem;">キャラ別成績</h2>
+        <div style="max-height:220px;overflow-y:auto;">
+          <table id="tblChar"><thead><tr><th>キャラ</th><th>使用</th><th>クリア</th><th>率</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+      <div>
+        <h2 style="font-size:0.75rem;">夜の王別成績</h2>
+        <div style="max-height:220px;overflow-y:auto;">
+          <table id="tblBoss"><thead><tr><th>夜の王</th><th>対戦</th><th>撃破</th><th>率</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>周回一覧</h2>
+    <div class="runs-table-wrap">
+      <table id="tblRuns">
+        <thead>
+          <tr><th>日付</th><th>キャラ</th><th>人数</th><th>結果</th><th>夜の王</th><th>Lv</th><th>タイム</th><th>遺物</th><th>メモ</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty-note" id="emptyNote">まだ記録がありません。上のフォームから最初の1周を記録してください。</div>
+    </div>
+    <div class="btnrow">
+      <button id="btnExport">CSVエクスポート</button>
+      <button class="danger" id="btnClearAll">全記録を削除</button>
+    </div>
+  </section>
+
+  <div class="note">
+    データはこのブラウザ内（localStorage）にのみ保存されます。別のブラウザ・端末・シークレットモードでは共有されません。定期的にCSVエクスポートでバックアップすることをおすすめします。
+  </div>
+</div>
+
+<script>
+(function(){
+  const CHARACTERS = ["追跡者","守護者","レディ","隠者","鉄の目","無頼漢","執行者","復讐者","学者","葬儀屋"];
+  const BOSSES = [
+    "夜の獣グラディウス","夜の爵エデレ","夜の識グノスター","深海の夜マリス",
+    "夜の魔リブラ","夜光の騎士フルゴール","夜の霞カリゴ","夜を象る者（ラスボス）",
+    "安寧者たち（DLC）","瓦礫の王（DLC）","その他/不明"
+  ];
+  const STORAGE_KEY = "nightreign_run_log_v1";
+
+  const $ = id => document.getElementById(id);
+  const fDate = $("fDate"), fChar = $("fChar"), fParty = $("fParty"), fResult = $("fResult"),
+        fBoss = $("fBoss"), fLevel = $("fLevel"), fTime = $("fTime"), fRelics = $("fRelics"), fNotes = $("fNotes");
+  const btnSave = $("btnSave"), btnClearForm = $("btnClearForm"), btnExport = $("btnExport"), btnClearAll = $("btnClearAll");
+  const formTitle = $("formTitle");
+
+  let editingId = null;
+
+  function populateSelect(sel, list){
+    sel.innerHTML = list.map(v => '<option value="'+escapeAttr(v)+'">'+escapeHtml(v)+'</option>').join("");
+  }
+  populateSelect(fChar, CHARACTERS);
+  populateSelect(fBoss, BOSSES);
+  fLevel.innerHTML = '<option value="">未記録</option>' +
+    Array.from({length:15}, (_,i)=>i+1).map(n=>'<option value="'+n+'">Lv.'+n+'</option>').join("");
+
+  function todayStr(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  }
+  fDate.value = todayStr();
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function escapeAttr(s){ return escapeHtml(s); }
+
+  function loadRuns(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  function saveRuns(runs){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(runs));
+  }
+
+  function parseTimeToSec(str){
+    if(!str) return null;
+    const m = str.trim().match(/^(\d{1,3}):([0-5]?\d)$/);
+    if(!m) return null;
+    return parseInt(m[1],10)*60 + parseInt(m[2],10);
+  }
+  function secToTime(sec){
+    sec = Math.round(sec);
+    const m = Math.floor(sec/60), s = sec%60;
+    return m+":"+String(s).padStart(2,"0");
+  }
+
+  function resetForm(){
+    editingId = null;
+    formTitle.textContent = "周回を記録する";
+    fDate.value = todayStr();
+    fChar.selectedIndex = 0;
+    fParty.value = "3人";
+    fResult.value = "クリア";
+    fBoss.selectedIndex = 0;
+    fLevel.value = "";
+    fTime.value = "";
+    fRelics.value = "";
+    fNotes.value = "";
+    btnSave.textContent = "この内容で記録する";
+  }
+
+  function loadIntoForm(run){
+    editingId = run.id;
+    formTitle.textContent = "記録を編集中";
+    fDate.value = run.date || todayStr();
+    fChar.value = run.character;
+    fParty.value = run.party;
+    fResult.value = run.result;
+    fBoss.value = run.boss;
+    fLevel.value = run.level != null ? String(run.level) : "";
+    fTime.value = run.time != null ? secToTime(run.time) : "";
+    fRelics.value = (run.relics||[]).join(", ");
+    fNotes.value = run.notes || "";
+    btnSave.textContent = "この内容で更新する";
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+
+  btnSave.addEventListener("click", ()=>{
+    const timeVal = fTime.value.trim();
+    const timeSec = timeVal ? parseTimeToSec(timeVal) : null;
+    if(timeVal && timeSec === null){
+      alert("クリアタイムは「分:秒」の形式で入力してください（例: 27:40）");
+      return;
+    }
+    const levelVal = fLevel.value !== "" ? parseInt(fLevel.value, 10) : null;
+    const runs = loadRuns();
+    const entry = {
+      id: editingId || (Date.now()+"_"+Math.random().toString(36).slice(2,7)),
+      date: fDate.value || todayStr(),
+      character: fChar.value,
+      party: fParty.value,
+      result: fResult.value,
+      boss: fBoss.value,
+      level: levelVal,
+      time: timeSec,
+      relics: fRelics.value.split(",").map(s=>s.trim()).filter(Boolean),
+      notes: fNotes.value.trim(),
+      createdAt: editingId ? (runs.find(r=>r.id===editingId)||{}).createdAt || Date.now() : Date.now()
+    };
+    if(editingId){
+      const idx = runs.findIndex(r=>r.id===editingId);
+      if(idx>=0) runs[idx] = entry; else runs.push(entry);
+    } else {
+      runs.push(entry);
+    }
+    saveRuns(runs);
+    resetForm();
+    render();
+  });
+
+  btnClearForm.addEventListener("click", resetForm);
+
+  function deleteRun(id){
+    if(!confirm("この記録を削除しますか？")) return;
+    const runs = loadRuns().filter(r=>r.id!==id);
+    saveRuns(runs);
+    if(editingId === id) resetForm();
+    render();
+  }
+
+  // ---- Share image (per-run result card) ----
+  const RESULT_LABELS = {
+    "Day1敗北": "Day 1 で敗北",
+    "Day2敗北": "Day 2 で敗北",
+    "Day3敗北": "Day 3 で敗北（撃破ならず）",
+    "クリア": "Day 3 夜の王を撃破"
+  };
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawShareCard(run){
+    const W = 1200, H = 675;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    const grad = ctx.createRadialGradient(W/2,0,80,W/2,H,900);
+    grad.addColorStop(0,"#1c1d24");
+    grad.addColorStop(1,"#0b0c10");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle = "#c9a24b";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(24,24,W-48,H-48);
+    ctx.strokeStyle = "rgba(201,162,75,0.3)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(34,34,W-68,H-68);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#8a7238";
+    ctx.font = "600 20px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    ctx.fillText("ELDEN RING NIGHTREIGN ── 周回記録", 60, 78);
+    ctx.fillStyle = "#565247";
+    ctx.font = "14px sans-serif";
+    ctx.fillText(run.date || "", 60, 100);
+
+    const isClear = run.result === "クリア";
+    ctx.textAlign = "center";
+    ctx.fillStyle = isClear ? "#4d8a5f" : "#b5423a";
+    ctx.font = "700 62px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    ctx.fillText(isClear ? "CLEAR" : "DEFEATED", W/2, 195);
+
+    ctx.fillStyle = "#e9e4d8";
+    ctx.font = "22px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    ctx.fillText(RESULT_LABELS[run.result] || run.result || "", W/2, 228);
+
+    ctx.fillStyle = "#c9a24b";
+    ctx.font = "700 50px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    ctx.fillText(run.character || "", W/2, 305);
+
+    ctx.fillStyle = "#e9e4d8";
+    ctx.font = "26px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    ctx.fillText("対 " + (run.boss || "—"), W/2, 345);
+
+    const stats = [
+      ["パーティ", run.party || "-"],
+      ["最終レベル", run.level != null ? ("Lv."+run.level) : "-"],
+      ["クリアタイム", run.time != null ? secToTime(run.time) : "-"]
+    ];
+    const boxW = 300, boxH = 88, gap = 26;
+    const totalW = boxW*3 + gap*2;
+    const startX = W/2 - totalW/2;
+    const boxY = 390;
+    stats.forEach((s,i)=>{
+      const x = startX + i*(boxW+gap);
+      ctx.fillStyle = "#0f1015";
+      ctx.strokeStyle = "#2a2c37";
+      ctx.lineWidth = 1;
+      roundRect(ctx,x,boxY,boxW,boxH,6);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#8a8578";
+      ctx.font = "15px sans-serif";
+      ctx.fillText(s[0], x+boxW/2, boxY+28);
+      ctx.fillStyle = "#e9e4d8";
+      ctx.font = "700 25px sans-serif";
+      ctx.fillText(s[1], x+boxW/2, boxY+62);
+    });
+
+    if(run.relics && run.relics.length){
+      ctx.fillStyle = "#8a8578";
+      ctx.font = "16px 'Hiragino Mincho ProN','Yu Mincho',serif";
+      ctx.fillText("遺物: " + run.relics.join(" / "), W/2, 530);
+    }
+    if(run.notes){
+      ctx.fillStyle = "#565247";
+      ctx.font = "14px 'Hiragino Mincho ProN','Yu Mincho',serif";
+      const noteText = run.notes.length > 60 ? run.notes.slice(0,60)+"…" : run.notes;
+      ctx.fillText(noteText, W/2, 560);
+    }
+
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#565247";
+    ctx.font = "13px sans-serif";
+    ctx.fillText("#エルデンリングナイトレイン #Nightreign", W-60, H-45);
+
+    return canvas;
+  }
+
+  function shareRunImage(id){
+    const run = loadRuns().find(r=>r.id===id);
+    if(!run) return;
+    const canvas = drawShareCard(run);
+    canvas.toBlob(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const safeChar = (run.character||"run").replace(/[^\w一-龠ぁ-んァ-ヶ]/g,"");
+      a.href = url;
+      a.download = "nightreign_"+(run.date||todayStr())+"_"+safeChar+".png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  }
+
+  btnClearAll.addEventListener("click", ()=>{
+    if(!confirm("全ての周回記録を削除します。よろしいですか？（元に戻せません）")) return;
+    saveRuns([]);
+    resetForm();
+    render();
+  });
+
+  btnExport.addEventListener("click", ()=>{
+    const runs = loadRuns().slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"") || a.createdAt-b.createdAt);
+    const headers = ["日付","キャラクター","パーティ人数","結果","夜の王","最終レベル","クリアタイム","遺物1","遺物2","遺物3","メモ"];
+    const rows = runs.map(r=>{
+      const relics = r.relics||[];
+      return [
+        r.date||"", r.character||"", r.party||"", r.result||"", r.boss||"",
+        r.level!=null?r.level:"", r.time!=null?secToTime(r.time):"",
+        relics[0]||"", relics[1]||"", relics[2]||"", (r.notes||"").replace(/\n/g," ")
+      ];
+    });
+    const csvLines = [headers, ...rows].map(row =>
+      row.map(cell=>{
+        const s = String(cell);
+        return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+      }).join(",")
+    );
+    const csv = "﻿" + csvLines.join("\r\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = todayStr();
+    a.href = url;
+    a.download = "nightreign_run_log_"+stamp+".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  function render(){
+    const runs = loadRuns().slice().sort((a,b)=> (b.date||"").localeCompare(a.date||"") || b.createdAt-a.createdAt);
+
+    // ---- stats ----
+    const total = runs.length;
+    const clears = runs.filter(r=>r.result==="クリア");
+    $("statTotal").textContent = total;
+    $("statClear").textContent = clears.length;
+    $("statRate").textContent = total ? Math.round(clears.length/total*100)+"%" : "-";
+    const timedClears = clears.filter(r=>r.time!=null);
+    if(timedClears.length){
+      const avg = timedClears.reduce((s,r)=>s+r.time,0)/timedClears.length;
+      $("statAvgTime").textContent = secToTime(avg);
+    } else {
+      $("statAvgTime").textContent = "-";
+    }
+
+    // char breakdown
+    const charStats = {};
+    CHARACTERS.forEach(c => charStats[c] = {used:0, clear:0});
+    runs.forEach(r=>{
+      if(!charStats[r.character]) charStats[r.character] = {used:0, clear:0};
+      charStats[r.character].used++;
+      if(r.result==="クリア") charStats[r.character].clear++;
+    });
+    const charRows = Object.keys(charStats)
+      .filter(c => charStats[c].used > 0)
+      .sort((a,b)=> charStats[b].used - charStats[a].used);
+    const tblCharBody = document.querySelector("#tblChar tbody");
+    tblCharBody.innerHTML = charRows.length ? charRows.map(c=>{
+      const s = charStats[c];
+      const rate = s.used ? Math.round(s.clear/s.used*100)+"%" : "-";
+      return "<tr><td>"+escapeHtml(c)+"</td><td>"+s.used+"</td><td>"+s.clear+"</td><td>"+rate+"</td></tr>";
+    }).join("") : '<tr><td colspan="4" style="color:var(--text-dim);">データなし</td></tr>';
+
+    // boss breakdown
+    const bossStats = {};
+    runs.forEach(r=>{
+      if(!r.boss) return;
+      if(!bossStats[r.boss]) bossStats[r.boss] = {faced:0, beat:0};
+      bossStats[r.boss].faced++;
+      if(r.result==="クリア") bossStats[r.boss].beat++;
+    });
+    const bossRows = Object.keys(bossStats).sort((a,b)=> bossStats[b].faced - bossStats[a].faced);
+    const tblBossBody = document.querySelector("#tblBoss tbody");
+    tblBossBody.innerHTML = bossRows.length ? bossRows.map(b=>{
+      const s = bossStats[b];
+      const rate = s.faced ? Math.round(s.beat/s.faced*100)+"%" : "-";
+      return "<tr><td>"+escapeHtml(b)+"</td><td>"+s.faced+"</td><td>"+s.beat+"</td><td>"+rate+"</td></tr>";
+    }).join("") : '<tr><td colspan="4" style="color:var(--text-dim);">データなし</td></tr>';
+
+    // runs table
+    const tblRunsBody = document.querySelector("#tblRuns tbody");
+    const emptyNote = $("emptyNote");
+    if(!runs.length){
+      tblRunsBody.innerHTML = "";
+      emptyNote.style.display = "block";
+    } else {
+      emptyNote.style.display = "none";
+      tblRunsBody.innerHTML = runs.map(r=>{
+        const isClear = r.result === "クリア";
+        const relicsStr = (r.relics||[]).join(" / ");
+        const notesShort = (r.notes||"").length > 18 ? (r.notes.slice(0,18)+"…") : (r.notes||"");
+        return "<tr>"+
+          "<td>"+escapeHtml(r.date||"")+"</td>"+
+          "<td>"+escapeHtml(r.character||"")+"</td>"+
+          "<td>"+escapeHtml(r.party||"")+"</td>"+
+          "<td class=\""+(isClear?"tag-win":"tag-lose")+"\">"+escapeHtml(r.result||"")+"</td>"+
+          "<td>"+escapeHtml(r.boss||"")+"</td>"+
+          "<td>"+(r.level!=null?r.level:"-")+"</td>"+
+          "<td>"+(r.time!=null?secToTime(r.time):"-")+"</td>"+
+          "<td title=\""+escapeAttr(relicsStr)+"\">"+escapeHtml(relicsStr||"-")+"</td>"+
+          "<td title=\""+escapeAttr(r.notes||"")+"\">"+escapeHtml(notesShort||"-")+"</td>"+
+          "<td><div class=\"rowbtns\">"+
+            "<button class=\"small\" data-edit=\""+r.id+"\">編集</button>"+
+            "<button class=\"small\" data-share=\""+r.id+"\">画像</button>"+
+            "<button class=\"small danger\" data-del=\""+r.id+"\">削除</button>"+
+          "</div></td>"+
+        "</tr>";
+      }).join("");
+
+      tblRunsBody.querySelectorAll("[data-edit]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-edit");
+          const run = loadRuns().find(r=>r.id===id);
+          if(run) loadIntoForm(run);
+        });
+      });
+      tblRunsBody.querySelectorAll("[data-del]").forEach(btn=>{
+        btn.addEventListener("click", ()=> deleteRun(btn.getAttribute("data-del")));
+      });
+      tblRunsBody.querySelectorAll("[data-share]").forEach(btn=>{
+        btn.addEventListener("click", ()=> shareRunImage(btn.getAttribute("data-share")));
+      });
+    }
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

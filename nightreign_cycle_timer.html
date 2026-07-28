@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ナイトレイン サイクルタイマー</title>
+<style>
+  :root{
+    --gold:#c9a24b;
+    --gold-dim:#8a7238;
+    --bg:#0b0c10;
+    --bg2:#14151b;
+    --red:#b5423a;
+    --blue:#3c6e9e;
+    --green:#4d8a5f;
+    --text:#e9e4d8;
+    --text-dim:#8a8578;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:radial-gradient(ellipse at 50% 0%, #1b1c22 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    -webkit-tap-highlight-color:transparent;
+    overflow-x:hidden;
+  }
+  .wrap{
+    max-width:520px;
+    margin:0 auto;
+    min-height:100vh;
+    padding:20px 16px 40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  h1{
+    font-size:1.05rem;
+    letter-spacing:0.15em;
+    color:var(--gold);
+    font-weight:500;
+    margin:6px 0 2px;
+    text-align:center;
+  }
+  .sub{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    letter-spacing:0.08em;
+    margin-bottom:18px;
+    text-align:center;
+  }
+  .day-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .day-tab{
+    padding:6px 16px;
+    border:1px solid var(--gold-dim);
+    border-radius:2px;
+    font-size:0.78rem;
+    letter-spacing:0.1em;
+    color:var(--text-dim);
+    background:transparent;
+  }
+  .day-tab.active{
+    color:var(--bg);
+    background:var(--gold);
+    border-color:var(--gold);
+  }
+  .stage-badge{
+    font-size:0.75rem;
+    letter-spacing:0.2em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .phase-name{
+    font-size:1.5rem;
+    color:var(--text);
+    letter-spacing:0.08em;
+    margin-bottom:22px;
+    text-align:center;
+    min-height:2.4em;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:color 0.4s;
+  }
+  .phase-name.warn{color:var(--red);}
+  .ring{
+    position:relative;
+    width:260px;
+    height:260px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:22px;
+  }
+  .ring svg{
+    position:absolute;
+    top:0;left:0;
+    transform:rotate(-90deg);
+  }
+  .ring-track{
+    fill:none;
+    stroke:#2a2b33;
+    stroke-width:6;
+  }
+  .ring-progress{
+    fill:none;
+    stroke:var(--gold);
+    stroke-width:6;
+    stroke-linecap:round;
+    transition:stroke 0.4s;
+  }
+  .ring-progress.warn{stroke:var(--red);}
+  .ring-center{
+    text-align:center;
+  }
+  .big-time{
+    font-size:2.6rem;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0.02em;
+    color:var(--text);
+  }
+  .big-time.warn{color:var(--red);}
+  .elapsed{
+    font-size:0.72rem;
+    color:var(--text-dim);
+    margin-top:4px;
+    letter-spacing:0.06em;
+  }
+  .next-event{
+    font-size:0.78rem;
+    color:var(--text-dim);
+    letter-spacing:0.06em;
+    margin-bottom:22px;
+    text-align:center;
+    line-height:1.6;
+  }
+  .next-event b{color:var(--gold);font-weight:500;}
+  .timeline{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    margin-bottom:26px;
+    border:1px solid #2a2b33;
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .tl-row{
+    display:flex;
+    align-items:center;
+    padding:8px 12px;
+    font-size:0.72rem;
+    color:var(--text-dim);
+    border-bottom:1px solid #22232b;
+    letter-spacing:0.04em;
+  }
+  .tl-row:last-child{border-bottom:none;}
+  .tl-row.done{color:#5a5747;background:#101116;}
+  .tl-row.current{color:var(--text);background:#1c1d26;}
+  .tl-time{width:64px;flex-shrink:0;font-variant-numeric:tabular-nums;color:var(--gold-dim);}
+  .tl-row.current .tl-time{color:var(--gold);}
+  .controls{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .row2{display:flex;gap:10px;}
+  button{
+    flex:1;
+    padding:13px 10px;
+    font-size:0.85rem;
+    letter-spacing:0.1em;
+    border-radius:2px;
+    border:1px solid var(--gold-dim);
+    background:transparent;
+    color:var(--gold);
+    font-family:inherit;
+    cursor:pointer;
+  }
+  button.primary{
+    background:var(--gold);
+    color:#141118;
+    border-color:var(--gold);
+  }
+  button.danger{
+    border-color:#5a3a38;
+    color:#c98d87;
+  }
+  button:active{opacity:0.7;}
+  button:disabled{opacity:0.35;}
+  .settings{
+    width:100%;
+    border-top:1px solid #22232b;
+    padding-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .setting-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:0.75rem;
+    color:var(--text-dim);
+    letter-spacing:0.05em;
+  }
+  .toggle{
+    position:relative;
+    width:38px;height:20px;
+    background:#2a2b33;
+    border-radius:10px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .toggle.on{background:var(--gold-dim);}
+  .toggle::after{
+    content:"";
+    position:absolute;
+    top:2px;left:2px;
+    width:16px;height:16px;
+    background:var(--text);
+    border-radius:50%;
+    transition:left 0.2s;
+  }
+  .toggle.on::after{left:20px;background:var(--gold);}
+  input[type=range]{width:120px;accent-color:var(--gold);}
+  .note{
+    font-size:0.68rem;
+    color:#565247;
+    text-align:center;
+    margin-top:18px;
+    line-height:1.7;
+    letter-spacing:0.03em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>NIGHTREIGN CYCLE TIMER</h1>
+  <div class="sub">昼夜サイクル通知タイマー</div>
+
+  <div class="day-tabs">
+    <div class="day-tab" id="tabInfo">1日目・2日目 共通スケジュール</div>
+  </div>
+
+  <div class="stage-badge" id="dayLabel">DAY 1 未開始</div>
+  <div class="phase-name" id="phaseName">「開始」を押して上陸</div>
+
+  <div class="ring">
+    <svg width="260" height="260">
+      <circle class="ring-track" cx="130" cy="130" r="118"></circle>
+      <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="118" stroke-dasharray="741.4" stroke-dashoffset="741.4"></circle>
+    </svg>
+    <div class="ring-center">
+      <div class="big-time" id="bigTime">00:00</div>
+      <div class="elapsed" id="elapsedLabel">経過 00:00</div>
+    </div>
+  </div>
+
+  <div class="next-event" id="nextEvent">開始ボタンで上陸タイマーを起動します</div>
+
+  <div class="timeline" id="timeline"></div>
+
+  <div class="controls">
+    <div class="row2">
+      <button class="primary" id="btnStart">上陸 / 開始</button>
+      <button id="btnPause" disabled>一時停止</button>
+    </div>
+    <div class="row2">
+      <button id="btnNextDay" disabled>ボス撃破 → 次の日へ</button>
+      <button class="danger" id="btnReset">リセット</button>
+    </div>
+  </div>
+
+  <div class="settings">
+    <div class="setting-row">
+      <span>通知音</span>
+      <div class="toggle on" id="toggleSound"></div>
+    </div>
+    <div class="setting-row">
+      <span>事前予告（30秒前に一声）</span>
+      <div class="toggle on" id="toggleWarn"></div>
+    </div>
+    <div class="setting-row">
+      <span>音量</span>
+      <input type="range" id="volume" min="0" max="100" value="70">
+    </div>
+  </div>
+
+  <div class="note">
+    Day1・Day2は上陸から4:30で第1収縮開始／11:00で第2収縮開始／14:00でボス出現、という共通スケジュールに基づく目安タイマーです。実際のタイミングは状況により多少前後する場合があります。<br>
+    Day3（夜の王戦）は円収縮が無いため時間経過の記録のみ行います。
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- Event schedule for Day1 / Day2 (seconds from landing) ----
+  const DAY_EVENTS = [
+    {t:0,    label:"上陸 / 探索フェーズ開始", type:"phase"},
+    {t:270,  label:"第1収縮 予告（30秒前）", type:"warn"},
+    {t:300,  label:"夜の帳、迫る ─ 第1収縮開始", type:"shrink"},
+    {t:450,  label:"第1境界 収縮完了", type:"phase"},
+    {t:630,  label:"第2収縮 予告（30秒前）", type:"warn"},
+    {t:660,  label:"更なる夜の気配 ─ 第2収縮開始", type:"shrink"},
+    {t:840,  label:"夜の王 出現領域 確定", type:"boss"}
+  ];
+  // NOTE: precise field timings (approx): first warning 4:30, first close ~7:30,
+  // second warning 11:00, boss reveal 14:00. Adjusted to keep pre-warns inside display.
+  const REAL_MARKS = {
+    firstWarn: 270,   // 4:30 - 30s
+    firstShrink: 300, // 4:30
+    firstClose: 450,  // 7:30
+    secondWarn: 630,  // 11:00 - 30s
+    secondShrink: 660,// 11:00
+    bossReveal: 840   // 14:00
+  };
+  const TOTAL_T = 840;
+
+  let state = {
+    day: 1,
+    running: false,
+    paused: false,
+    startTs: null,
+    pausedAt: null,
+    pausedTotal: 0,
+    firedMarks: new Set(),
+    mode: "idle" // idle | day1 | day2 | day3
+  };
+
+  const $ = id => document.getElementById(id);
+  const dayLabel = $("dayLabel");
+  const phaseName = $("phaseName");
+  const bigTime = $("bigTime");
+  const elapsedLabel = $("elapsedLabel");
+  const nextEvent = $("nextEvent");
+  const ringProgress = $("ringProgress");
+  const timeline = $("timeline");
+  const btnStart = $("btnStart");
+  const btnPause = $("btnPause");
+  const btnNextDay = $("btnNextDay");
+  const btnReset = $("btnReset");
+  const toggleSound = $("toggleSound");
+  const toggleWarn = $("toggleWarn");
+  const volumeSlider = $("volume");
+
+  let soundOn = true;
+  let warnOn = true;
+
+  toggleSound.addEventListener("click", ()=>{
+    soundOn = !soundOn;
+    toggleSound.classList.toggle("on", soundOn);
+  });
+  toggleWarn.addEventListener("click", ()=>{
+    warnOn = !warnOn;
+    toggleWarn.classList.toggle("on", warnOn);
+  });
+
+  // ---- Audio: generated tones, no external assets ----
+  let audioCtx = null;
+  function ensureCtx(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+  function beep(freq, duration, delay, type){
+    if(!soundOn) return;
+    const ctx = ensureCtx();
+    const vol = (parseInt(volumeSlider.value,10)/100) * 0.35;
+    const t0 = ctx.currentTime + (delay||0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(vol, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.05);
+  }
+  function playPreWarnChime(){ beep(880,0.18,0,"sine"); beep(880,0.18,0.24,"sine"); }
+  function playShrinkAlarm(){ beep(523,0.25,0,"triangle"); beep(392,0.25,0.28,"triangle"); beep(523,0.35,0.56,"triangle"); }
+  function playBossHorn(){ beep(196,0.5,0,"sawtooth"); beep(261,0.6,0.35,"sawtooth"); beep(329,0.9,0.75,"sawtooth"); }
+
+  function fmt(sec){
+    sec = Math.max(0, Math.round(sec));
+    const m = Math.floor(sec/60);
+    const s = sec%60;
+    return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+  }
+
+  function buildTimeline(){
+    timeline.innerHTML = "";
+    const rows = [
+      {t:0, label:"上陸"},
+      {t:REAL_MARKS.firstShrink, label:"第1収縮 開始"},
+      {t:REAL_MARKS.firstClose, label:"第1境界 収縮完了"},
+      {t:REAL_MARKS.secondShrink, label:"第2収縮 開始"},
+      {t:REAL_MARKS.bossReveal, label:"夜の王 出現"}
+    ];
+    rows.forEach(r=>{
+      const div = document.createElement("div");
+      div.className = "tl-row";
+      div.dataset.t = r.t;
+      div.innerHTML = '<span class="tl-time">'+fmt(r.t)+'</span><span>'+r.label+'</span>';
+      timeline.appendChild(div);
+    });
+  }
+  buildTimeline();
+
+  function getElapsed(){
+    if(!state.startTs) return 0;
+    const now = state.paused ? state.pausedAt : Date.now();
+    return (now - state.startTs - state.pausedTotal)/1000;
+  }
+
+  function currentPhaseInfo(elapsed){
+    if(state.mode === "day3"){
+      return {name:"夜の王 討伐フェーズ（円収縮なし）", next:null, warn:false};
+    }
+    if(elapsed < REAL_MARKS.firstWarn){
+      return {name:"探索フェーズ", next:{label:"第1収縮まで", t:REAL_MARKS.firstShrink}, warn:false};
+    }
+    if(elapsed < REAL_MARKS.firstShrink){
+      return {name:"まもなく第1収縮", next:{label:"第1収縮開始まで", t:REAL_MARKS.firstShrink}, warn:true};
+    }
+    if(elapsed < REAL_MARKS.firstClose){
+      return {name:"第1収縮 進行中", next:{label:"収縮完了まで", t:REAL_MARKS.firstClose}, warn:true};
+    }
+    if(elapsed < REAL_MARKS.secondWarn){
+      return {name:"安全圏フェーズ", next:{label:"第2収縮まで", t:REAL_MARKS.secondShrink}, warn:false};
+    }
+    if(elapsed < REAL_MARKS.secondShrink){
+      return {name:"まもなく第2収縮", next:{label:"第2収縮開始まで", t:REAL_MARKS.secondShrink}, warn:true};
+    }
+    if(elapsed < REAL_MARKS.bossReveal){
+      return {name:"第2収縮 進行中", next:{label:"夜の王 出現まで", t:REAL_MARKS.bossReveal}, warn:true};
+    }
+    return {name:"夜の王 出現 ─ 撃破せよ", next:null, warn:true};
+  }
+
+  function checkMarks(elapsed){
+    const marks = [
+      {key:"firstWarn", t:REAL_MARKS.firstWarn, fn:playPreWarnChime, need:warnOn},
+      {key:"firstShrink", t:REAL_MARKS.firstShrink, fn:playShrinkAlarm, need:true},
+      {key:"secondWarn", t:REAL_MARKS.secondWarn, fn:playPreWarnChime, need:warnOn},
+      {key:"secondShrink", t:REAL_MARKS.secondShrink, fn:playShrinkAlarm, need:true},
+      {key:"bossReveal", t:REAL_MARKS.bossReveal, fn:playBossHorn, need:true}
+    ];
+    marks.forEach(m=>{
+      if(elapsed >= m.t && !state.firedMarks.has(m.key)){
+        state.firedMarks.add(m.key);
+        if(m.need) m.fn();
+      }
+    });
+  }
+
+  function updateTimelineHighlight(elapsed){
+    const rows = timeline.querySelectorAll(".tl-row");
+    let currentIdx = 0;
+    rows.forEach((row,i)=>{
+      const t = parseFloat(row.dataset.t);
+      row.classList.remove("done","current");
+      if(elapsed >= t) { row.classList.add("done"); currentIdx = i; }
+    });
+    rows.forEach((row,i)=>{
+      const t = parseFloat(row.dataset.t);
+      const nextT = rows[i+1] ? parseFloat(rows[i+1].dataset.t) : Infinity;
+      if(elapsed >= t && elapsed < nextT){
+        row.classList.add("current");
+        row.classList.remove("done");
+      }
+    });
+  }
+
+  const CIRC = 2 * Math.PI * 118;
+
+  function tick(){
+    if(state.mode === "idle"){ return; }
+    const elapsed = getElapsed();
+
+    if(state.mode === "day3"){
+      bigTime.textContent = fmt(elapsed);
+      bigTime.classList.remove("warn");
+      elapsedLabel.textContent = "経過 "+fmt(elapsed);
+      phaseName.textContent = "夜の王 討伐フェーズ（円収縮なし）";
+      phaseName.classList.remove("warn");
+      nextEvent.innerHTML = "討伐できたら「リセット」で次の周回へ";
+      ringProgress.setAttribute("stroke-dashoffset", 0);
+      requestAnimationFrame(loop);
+      return;
+    }
+
+    checkMarks(elapsed);
+    const info = currentPhaseInfo(elapsed);
+    dayLabel.textContent = "DAY "+state.day;
+    phaseName.textContent = info.name;
+    phaseName.classList.toggle("warn", info.warn);
+    bigTime.classList.toggle("warn", info.warn);
+
+    if(info.next){
+      const remain = info.next.t - elapsed;
+      bigTime.textContent = fmt(remain);
+      const frac = Math.max(0, Math.min(1, elapsed / TOTAL_T));
+      ringProgress.setAttribute("stroke-dashoffset", CIRC * (1-frac));
+      nextEvent.innerHTML = "<b>"+info.next.label+"</b> ── 残り "+fmt(remain);
+    } else {
+      bigTime.textContent = fmt(elapsed);
+      ringProgress.setAttribute("stroke-dashoffset", 0);
+      nextEvent.innerHTML = "<b>夜の王が出現しています</b>";
+      btnNextDay.disabled = false;
+    }
+    elapsedLabel.textContent = "経過 "+fmt(elapsed);
+    updateTimelineHighlight(elapsed);
+
+    if(elapsed >= REAL_MARKS.bossReveal){
+      btnNextDay.disabled = false;
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  let rafId = null;
+  function loop(){
+    tick();
+  }
+
+  function startTimer(day){
+    state.day = day;
+    state.mode = day === 3 ? "day3" : ("day"+day);
+    state.running = true;
+    state.paused = false;
+    state.startTs = Date.now();
+    state.pausedAt = null;
+    state.pausedTotal = 0;
+    state.firedMarks = new Set();
+    btnStart.disabled = true;
+    btnPause.disabled = false;
+    btnNextDay.disabled = (day === 3);
+    dayLabel.textContent = "DAY "+day;
+    ensureCtx();
+    requestAnimationFrame(loop);
+  }
+
+  btnStart.addEventListener("click", ()=>{
+    startTimer(1);
+  });
+
+  btnPause.addEventListener("click", ()=>{
+    if(!state.running) return;
+    if(!state.paused){
+      state.paused = true;
+      state.pausedAt = Date.now();
+      btnPause.textContent = "再開";
+    } else {
+      state.paused = false;
+      state.pausedTotal += (Date.now() - state.pausedAt);
+      btnPause.textContent = "一時停止";
+      requestAnimationFrame(loop);
+    }
+  });
+
+  btnNextDay.addEventListener("click", ()=>{
+    if(state.day === 1){
+      startTimer(2);
+      phaseName.textContent = "DAY2 上陸";
+    } else if(state.day === 2){
+      startTimer(3);
+      phaseName.textContent = "DAY3 夜の王 討伐フェーズ";
+    } else {
+      resetAll();
+    }
+  });
+
+  function resetAll(){
+    state = {day:1, running:false, paused:false, startTs:null, pausedAt:null, pausedTotal:0, firedMarks:new Set(), mode:"idle"};
+    btnStart.disabled = false;
+    btnPause.disabled = true;
+    btnPause.textContent = "一時停止";
+    btnNextDay.disabled = true;
+    dayLabel.textContent = "DAY 1 未開始";
+    phaseName.textContent = "「開始」を押して上陸";
+    phaseName.classList.remove("warn");
+    bigTime.textContent = "00:00";
+    bigTime.classList.remove("warn");
+    elapsedLabel.textContent = "経過 00:00";
+    nextEvent.textContent = "開始ボタンで上陸タイマーを起動します";
+    ringProgress.setAttribute("stroke-dashoffset", CIRC);
+    buildTimeline();
+  }
+  btnReset.addEventListener("click", resetAll);
+
+  ringProgress.setAttribute("stroke-dasharray", CIRC);
+  ringProgress.setAttribute("stroke-dashoffset", CIRC);
+})();
+</script>
+</body>
+</html>
