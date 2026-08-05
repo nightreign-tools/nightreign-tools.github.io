@@ -68,6 +68,29 @@
     background:var(--gold);
     border-color:var(--gold);
   }
+  .lang-switch{
+    display:flex;
+    gap:6px;
+    margin-bottom:14px;
+    align-self:flex-end;
+  }
+  .lang-btn{
+    padding:5px 16px;
+    font-size:0.68rem;
+    letter-spacing:0.06em;
+    border:1px solid var(--gold-dim);
+    border-radius:2px;
+    background:transparent;
+    color:var(--text-dim);
+    font-family:inherit;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .lang-btn.active{
+    background:var(--gold);
+    color:var(--bg);
+    border-color:var(--gold);
+  }
   .stage-badge{
     font-size:0.75rem;
     letter-spacing:0.2em;
@@ -243,8 +266,13 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="lang-switch">
+    <button class="lang-btn active" id="langJa" type="button">日本語</button>
+    <button class="lang-btn" id="langEn" type="button">EN</button>
+  </div>
+
   <h1>NIGHTREIGN CYCLE TIMER</h1>
-  <div class="sub">昼夜サイクル通知タイマー</div>
+  <div class="sub" id="subTitle">ナイトレインサイクルタイマー</div>
 
   <div class="day-tabs">
     <div class="day-tab" id="tabInfo">1日目・2日目 共通スケジュール</div>
@@ -281,20 +309,20 @@
 
   <div class="settings">
     <div class="setting-row">
-      <span>通知音</span>
+      <span id="settingSoundLabel">通知音</span>
       <div class="toggle on" id="toggleSound"></div>
     </div>
     <div class="setting-row">
-      <span>事前予告（30秒前に一声）</span>
+      <span id="settingWarnLabel">事前予告（30秒前に一声）</span>
       <div class="toggle on" id="toggleWarn"></div>
     </div>
     <div class="setting-row">
-      <span>音量</span>
+      <span id="settingVolumeLabel">音量</span>
       <input type="range" id="volume" min="0" max="100" value="70">
     </div>
   </div>
 
-  <div class="note">
+  <div class="note" id="noteText">
     Day1・Day2は上陸から4:30で第1収縮開始／11:00で第2収縮開始／14:00でボス出現、という共通スケジュールに基づく目安タイマーです。実際のタイミングは状況により多少前後する場合があります。<br>
     Day3（夜の王戦）は円収縮が無いため時間経過の記録のみ行います。
   </div>
@@ -302,6 +330,96 @@
 
 <script>
 (function(){
+  // ---- i18n ----
+  const I18N = {
+    ja: {
+      subTitle: "ナイトレインサイクルタイマー",
+      dayTabInfo: "1日目・2日目 共通スケジュール",
+      notStarted: "未開始",
+      phaseInitial: "「開始」を押して上陸",
+      nextEventInitial: "開始ボタンで上陸タイマーを起動します",
+      phaseExplore: "探索フェーズ",
+      phaseSoonFirstShrink: "まもなく第1収縮",
+      phaseFirstShrinking: "第1収縮 進行中",
+      phaseSafe: "安全圏フェーズ",
+      phaseSoonSecondShrink: "まもなく第2収縮",
+      phaseSecondShrinking: "第2収縮 進行中",
+      phaseBossAppeared: "夜の王 出現 ─ 撃破せよ",
+      phaseDay3: "夜の王 討伐フェーズ（円収縮なし）",
+      nextLabelFirstShrink: "第1収縮まで",
+      nextLabelFirstShrinkStart: "第1収縮開始まで",
+      nextLabelFirstCloseComplete: "収縮完了まで",
+      nextLabelSecondShrink: "第2収縮まで",
+      nextLabelSecondShrinkStart: "第2収縮開始まで",
+      nextLabelBossReveal: "夜の王 出現まで",
+      nextEventBossAppeared: "夜の王が出現しています",
+      nextEventDay3: "討伐できたら「リセット」で次の周回へ",
+      elapsedPrefix: "経過 ",
+      tlLanding: "上陸",
+      tlFirstShrinkStart: "第1収縮 開始",
+      tlFirstCloseComplete: "第1境界 収縮完了",
+      tlSecondShrinkStart: "第2収縮 開始",
+      tlBossReveal: "夜の王 出現",
+      btnStart: "上陸 / 開始",
+      btnPause: "一時停止",
+      btnResume: "再開",
+      btnNextDay: "ボス撃破 → 次の日へ",
+      btnReset: "リセット",
+      settingSound: "通知音",
+      settingWarn: "事前予告（30秒前に一声）",
+      settingVolume: "音量",
+      day2Landing: "DAY2 上陸",
+      day3Text: "DAY3 夜の王 討伐フェーズ",
+      noteHtml: "Day1・Day2は上陸から4:30で第1収縮開始／11:00で第2収縮開始／14:00でボス出現、という共通スケジュールに基づく目安タイマーです。実際のタイミングは状況により多少前後する場合があります。<br>Day3（夜の王戦）は円収縮が無いため時間経過の記録のみ行います。",
+      remainFn: (label, remain)=> "<b>"+label+"</b> ── 残り "+remain,
+      docTitle: "ナイトレイン サイクルタイマー"
+    },
+    en: {
+      subTitle: "Day/Night Cycle Notification Timer",
+      dayTabInfo: "Common Schedule for Day 1 & Day 2",
+      notStarted: "Not Started",
+      phaseInitial: "Press “Start” to land",
+      nextEventInitial: "Press Start to begin the landing timer",
+      phaseExplore: "Exploration Phase",
+      phaseSoonFirstShrink: "1st Shrink Approaching",
+      phaseFirstShrinking: "1st Shrink in Progress",
+      phaseSafe: "Safe Zone Phase",
+      phaseSoonSecondShrink: "2nd Shrink Approaching",
+      phaseSecondShrinking: "2nd Shrink in Progress",
+      phaseBossAppeared: "Nightlord Has Appeared ─ Defeat It",
+      phaseDay3: "Nightlord Battle Phase (No Ring Shrink)",
+      nextLabelFirstShrink: "Until 1st Shrink",
+      nextLabelFirstShrinkStart: "Until 1st Shrink Starts",
+      nextLabelFirstCloseComplete: "Until Shrink Completes",
+      nextLabelSecondShrink: "Until 2nd Shrink",
+      nextLabelSecondShrinkStart: "Until 2nd Shrink Starts",
+      nextLabelBossReveal: "Until Nightlord Appears",
+      nextEventBossAppeared: "The Nightlord has appeared",
+      nextEventDay3: "Once defeated, press “Reset” for the next run",
+      elapsedPrefix: "Elapsed ",
+      tlLanding: "Landing",
+      tlFirstShrinkStart: "1st Shrink Starts",
+      tlFirstCloseComplete: "1st Boundary Closed",
+      tlSecondShrinkStart: "2nd Shrink Starts",
+      tlBossReveal: "Nightlord Appears",
+      btnStart: "Land / Start",
+      btnPause: "Pause",
+      btnResume: "Resume",
+      btnNextDay: "Boss Defeated → Next Day",
+      btnReset: "Reset",
+      settingSound: "Notification Sound",
+      settingWarn: "Pre-warning (cue 30s before)",
+      settingVolume: "Volume",
+      day2Landing: "DAY 2 — Landing",
+      day3Text: "DAY 3 — Nightlord Battle Phase",
+      noteHtml: "Day 1 and Day 2 follow a common schedule: the 1st shrink begins 4:30 after landing, the 2nd shrink begins at 11:00, and the boss appears at 14:00. This is an estimated timer — actual timing may vary slightly.<br>Day 3 (Nightlord battle) has no ring shrink, so only elapsed time is tracked.",
+      remainFn: (label, remain)=> "<b>"+label+"</b> — "+remain+" remaining",
+      docTitle: "Nightreign Cycle Timer"
+    }
+  };
+  let currentLang = "ja";
+  function T(key){ return I18N[currentLang][key]; }
+
   // ---- Event schedule for Day1 / Day2 (seconds from landing) ----
   const DAY_EVENTS = [
     {t:0,    label:"上陸 / 探索フェーズ開始", type:"phase"},
@@ -402,11 +520,11 @@
   function buildTimeline(){
     timeline.innerHTML = "";
     const rows = [
-      {t:0, label:"上陸"},
-      {t:REAL_MARKS.firstShrink, label:"第1収縮 開始"},
-      {t:REAL_MARKS.firstClose, label:"第1境界 収縮完了"},
-      {t:REAL_MARKS.secondShrink, label:"第2収縮 開始"},
-      {t:REAL_MARKS.bossReveal, label:"夜の王 出現"}
+      {t:0, label:T("tlLanding")},
+      {t:REAL_MARKS.firstShrink, label:T("tlFirstShrinkStart")},
+      {t:REAL_MARKS.firstClose, label:T("tlFirstCloseComplete")},
+      {t:REAL_MARKS.secondShrink, label:T("tlSecondShrinkStart")},
+      {t:REAL_MARKS.bossReveal, label:T("tlBossReveal")}
     ];
     rows.forEach(r=>{
       const div = document.createElement("div");
@@ -426,27 +544,27 @@
 
   function currentPhaseInfo(elapsed){
     if(state.mode === "day3"){
-      return {name:"夜の王 討伐フェーズ（円収縮なし）", next:null, warn:false};
+      return {nameKey:"phaseDay3", next:null, warn:false};
     }
     if(elapsed < REAL_MARKS.firstWarn){
-      return {name:"探索フェーズ", next:{label:"第1収縮まで", t:REAL_MARKS.firstShrink}, warn:false};
+      return {nameKey:"phaseExplore", next:{labelKey:"nextLabelFirstShrink", t:REAL_MARKS.firstShrink}, warn:false};
     }
     if(elapsed < REAL_MARKS.firstShrink){
-      return {name:"まもなく第1収縮", next:{label:"第1収縮開始まで", t:REAL_MARKS.firstShrink}, warn:true};
+      return {nameKey:"phaseSoonFirstShrink", next:{labelKey:"nextLabelFirstShrinkStart", t:REAL_MARKS.firstShrink}, warn:true};
     }
     if(elapsed < REAL_MARKS.firstClose){
-      return {name:"第1収縮 進行中", next:{label:"収縮完了まで", t:REAL_MARKS.firstClose}, warn:true};
+      return {nameKey:"phaseFirstShrinking", next:{labelKey:"nextLabelFirstCloseComplete", t:REAL_MARKS.firstClose}, warn:true};
     }
     if(elapsed < REAL_MARKS.secondWarn){
-      return {name:"安全圏フェーズ", next:{label:"第2収縮まで", t:REAL_MARKS.secondShrink}, warn:false};
+      return {nameKey:"phaseSafe", next:{labelKey:"nextLabelSecondShrink", t:REAL_MARKS.secondShrink}, warn:false};
     }
     if(elapsed < REAL_MARKS.secondShrink){
-      return {name:"まもなく第2収縮", next:{label:"第2収縮開始まで", t:REAL_MARKS.secondShrink}, warn:true};
+      return {nameKey:"phaseSoonSecondShrink", next:{labelKey:"nextLabelSecondShrinkStart", t:REAL_MARKS.secondShrink}, warn:true};
     }
     if(elapsed < REAL_MARKS.bossReveal){
-      return {name:"第2収縮 進行中", next:{label:"夜の王 出現まで", t:REAL_MARKS.bossReveal}, warn:true};
+      return {nameKey:"phaseSecondShrinking", next:{labelKey:"nextLabelBossReveal", t:REAL_MARKS.bossReveal}, warn:true};
     }
-    return {name:"夜の王 出現 ─ 撃破せよ", next:null, warn:true};
+    return {nameKey:"phaseBossAppeared", next:null, warn:true};
   }
 
   function checkMarks(elapsed){
@@ -492,10 +610,10 @@
     if(state.mode === "day3"){
       bigTime.textContent = fmt(elapsed);
       bigTime.classList.remove("warn");
-      elapsedLabel.textContent = "経過 "+fmt(elapsed);
-      phaseName.textContent = "夜の王 討伐フェーズ（円収縮なし）";
+      elapsedLabel.textContent = T("elapsedPrefix")+fmt(elapsed);
+      phaseName.textContent = T("phaseDay3");
       phaseName.classList.remove("warn");
-      nextEvent.innerHTML = "討伐できたら「リセット」で次の周回へ";
+      nextEvent.innerHTML = T("nextEventDay3");
       ringProgress.setAttribute("stroke-dashoffset", 0);
       requestAnimationFrame(loop);
       return;
@@ -504,7 +622,7 @@
     checkMarks(elapsed);
     const info = currentPhaseInfo(elapsed);
     dayLabel.textContent = "DAY "+state.day;
-    phaseName.textContent = info.name;
+    phaseName.textContent = T(info.nameKey);
     phaseName.classList.toggle("warn", info.warn);
     bigTime.classList.toggle("warn", info.warn);
 
@@ -513,14 +631,14 @@
       bigTime.textContent = fmt(remain);
       const frac = Math.max(0, Math.min(1, elapsed / TOTAL_T));
       ringProgress.setAttribute("stroke-dashoffset", CIRC * (1-frac));
-      nextEvent.innerHTML = "<b>"+info.next.label+"</b> ── 残り "+fmt(remain);
+      nextEvent.innerHTML = T("remainFn")(T(info.next.labelKey), fmt(remain));
     } else {
       bigTime.textContent = fmt(elapsed);
       ringProgress.setAttribute("stroke-dashoffset", 0);
-      nextEvent.innerHTML = "<b>夜の王が出現しています</b>";
+      nextEvent.innerHTML = "<b>"+T("nextEventBossAppeared")+"</b>";
       btnNextDay.disabled = false;
     }
-    elapsedLabel.textContent = "経過 "+fmt(elapsed);
+    elapsedLabel.textContent = T("elapsedPrefix")+fmt(elapsed);
     updateTimelineHighlight(elapsed);
 
     if(elapsed >= REAL_MARKS.bossReveal){
@@ -561,11 +679,11 @@
     if(!state.paused){
       state.paused = true;
       state.pausedAt = Date.now();
-      btnPause.textContent = "再開";
+      btnPause.textContent = T("btnResume");
     } else {
       state.paused = false;
       state.pausedTotal += (Date.now() - state.pausedAt);
-      btnPause.textContent = "一時停止";
+      btnPause.textContent = T("btnPause");
       requestAnimationFrame(loop);
     }
   });
@@ -573,10 +691,10 @@
   btnNextDay.addEventListener("click", ()=>{
     if(state.day === 1){
       startTimer(2);
-      phaseName.textContent = "DAY2 上陸";
+      phaseName.textContent = T("day2Landing");
     } else if(state.day === 2){
       startTimer(3);
-      phaseName.textContent = "DAY3 夜の王 討伐フェーズ";
+      phaseName.textContent = T("day3Text");
     } else {
       resetAll();
     }
@@ -586,15 +704,15 @@
     state = {day:1, running:false, paused:false, startTs:null, pausedAt:null, pausedTotal:0, firedMarks:new Set(), mode:"idle"};
     btnStart.disabled = false;
     btnPause.disabled = true;
-    btnPause.textContent = "一時停止";
+    btnPause.textContent = T("btnPause");
     btnNextDay.disabled = true;
-    dayLabel.textContent = "DAY 1 未開始";
-    phaseName.textContent = "「開始」を押して上陸";
+    dayLabel.textContent = "DAY 1 "+T("notStarted");
+    phaseName.textContent = T("phaseInitial");
     phaseName.classList.remove("warn");
     bigTime.textContent = "00:00";
     bigTime.classList.remove("warn");
-    elapsedLabel.textContent = "経過 00:00";
-    nextEvent.textContent = "開始ボタンで上陸タイマーを起動します";
+    elapsedLabel.textContent = T("elapsedPrefix")+"00:00";
+    nextEvent.textContent = T("nextEventInitial");
     ringProgress.setAttribute("stroke-dashoffset", CIRC);
     buildTimeline();
   }
@@ -602,6 +720,50 @@
 
   ringProgress.setAttribute("stroke-dasharray", CIRC);
   ringProgress.setAttribute("stroke-dashoffset", CIRC);
+
+  // ---- Language switching ----
+  const langJa = $("langJa");
+  const langEn = $("langEn");
+  const subTitleEl = $("subTitle");
+  const tabInfoEl = $("tabInfo");
+  const settingSoundLabel = $("settingSoundLabel");
+  const settingWarnLabel = $("settingWarnLabel");
+  const settingVolumeLabel = $("settingVolumeLabel");
+  const noteTextEl = $("noteText");
+
+  function applyStaticTranslations(){
+    document.documentElement.lang = (currentLang === "ja") ? "ja" : "en";
+    document.title = T("docTitle");
+    subTitleEl.textContent = T("subTitle");
+    tabInfoEl.textContent = T("dayTabInfo");
+    settingSoundLabel.textContent = T("settingSound");
+    settingWarnLabel.textContent = T("settingWarn");
+    settingVolumeLabel.textContent = T("settingVolume");
+    noteTextEl.innerHTML = T("noteHtml");
+    btnStart.textContent = T("btnStart");
+    btnPause.textContent = state.paused ? T("btnResume") : T("btnPause");
+    btnNextDay.textContent = T("btnNextDay");
+    btnReset.textContent = T("btnReset");
+    buildTimeline();
+    if(state.mode === "idle"){
+      dayLabel.textContent = "DAY 1 "+T("notStarted");
+      phaseName.textContent = T("phaseInitial");
+      nextEvent.textContent = T("nextEventInitial");
+      elapsedLabel.textContent = T("elapsedPrefix")+"00:00";
+    }
+  }
+
+  function switchLang(lang){
+    if(lang === currentLang) return;
+    currentLang = lang;
+    langJa.classList.toggle("active", lang === "ja");
+    langEn.classList.toggle("active", lang === "en");
+    applyStaticTranslations();
+  }
+  langJa.addEventListener("click", ()=> switchLang("ja"));
+  langEn.addEventListener("click", ()=> switchLang("en"));
+
+  applyStaticTranslations();
 })();
 </script>
 </body>
