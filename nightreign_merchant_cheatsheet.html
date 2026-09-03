@@ -77,6 +77,8 @@
     padding:8px 10px;
     line-height:1.5;
   }
+  .body-list.shop li{background:rgba(126,195,255,0.08);border-color:rgba(126,195,255,0.3);border-left:3px solid #7ec3ff;}
+  .body-list.village li{background:rgba(127,224,160,0.08);border-color:rgba(127,224,160,0.3);border-left:3px solid #7fe0a0;}
   .no-results{text-align:center;color:var(--text-dim);font-size:0.78rem;padding:30px 0;}
 
   .note{font-size:0.64rem;color:var(--text-dim);text-align:center;margin-top:20px;line-height:1.8;letter-spacing:0.02em;}
@@ -226,8 +228,8 @@
       html += '</div>';
       if(isOpen){
         html += '<div class="item-body">';
-        html += '<div class="body-section"><div class="body-label shop">■ 店売り（通常商人）の見どころ</div><ul class="body-list">'+p.shop.map(s=>'<li>'+escapeHtml(s)+'</li>').join("")+'</ul></div>';
-        html += '<div class="body-section"><div class="body-label village">■ 村売り（村の商人）の見どころ</div><ul class="body-list">'+p.village.map(s=>'<li>'+escapeHtml(s)+'</li>').join("")+'</ul></div>';
+        html += '<div class="body-section"><div class="body-label shop">■ 店売り（通常商人）の見どころ</div><ul class="body-list shop">'+p.shop.map(s=>'<li>'+escapeHtml(s)+'</li>').join("")+'</ul></div>';
+        html += '<div class="body-section"><div class="body-label village">■ 村売り（村の商人）の見どころ</div><ul class="body-list village">'+p.village.map(s=>'<li>'+escapeHtml(s)+'</li>').join("")+'</ul></div>';
         html += '</div>';
       }
       html += '</div>';
