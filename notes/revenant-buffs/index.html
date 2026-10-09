@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="エルデンリング ナイトレインで祈祷を使う復讐者が欲しい火力付帯を、共通・ビルド別・譲り合い早見表で整理した一覧。">
+<title>復讐者の火力付帯</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+/* Layout: 一列の参照ページ。上部に章ナビ、各章は表。スマホでは表だけ横スクロール */
+:root{
+  --bg:#eef0f2; --surface:#ffffff; --fg:#1f2329; --muted:#5d6570;
+  --line:#d3d8de; --accent:#8a6a1f; --accent-soft:#f3ead3;
+  --p1:#f6d9c9; --p1-fg:#7a2e12; --p2:#f4e9c4; --p2-fg:#6a5410; --p3:#dde8f3; --p3-fg:#244a6e;
+  --font-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"Noto Sans JP","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15181c; --surface:#1d2127; --fg:#e4e6e9; --muted:#9aa3ad;
+  --line:#323840; --accent:#d4b062; --accent-soft:#2e2818;
+  --p1:#4a2a1f; --p1-fg:#f3c3a8; --p2:#433a1c; --p2-fg:#ecd791; --p3:#1f3346; --p3-fg:#b7d3ee;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15181c; --surface:#1d2127; --fg:#e4e6e9; --muted:#9aa3ad;
+  --line:#323840; --accent:#d4b062; --accent-soft:#2e2818;
+  --p1:#4a2a1f; --p1-fg:#f3c3a8; --p2:#433a1c; --p2-fg:#ecd791; --p3:#1f3346; --p3-fg:#b7d3ee;
+  color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.7}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:32px 64px;display:flex;flex-direction:column;gap:40px}
+header{display:flex;flex-direction:column;gap:8px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,5vw,40px);line-height:1.25;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0;word-break:auto-phrase;text-wrap:pretty}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-16px;padding:10px 16px;display:flex;gap:6px;flex-wrap:wrap}
+nav a{color:var(--fg);text-decoration:none;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+nav a:hover,nav a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+section{display:flex;flex-direction:column;gap:12px;scroll-margin-top:64px}
+h2{font-family:var(--font-display);font-weight:600;font-size:22px;margin:0;display:flex;align-items:baseline;gap:12px}
+h2 small{font-family:var(--font-body);font-size:12px;color:var(--muted);font-weight:400}
+.note{font-size:13px;color:var(--muted);margin:0}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:500;white-space:nowrap;background:var(--surface)}
+td.name{font-weight:700;white-space:nowrap}
+td.rate{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:500}
+td.rate.none{color:var(--muted);font-weight:400}
+.chip{display:inline-block;min-width:1.8em;text-align:center;padding:1px 8px;border-radius:4px;font-weight:700}
+.p1{background:var(--p1);color:var(--p1-fg)} .p2{background:var(--p2);color:var(--p2-fg)} .p3{background:var(--p3);color:var(--p3-fg)}
+.t-common{min-width:960px} .t-build{min-width:1000px} .t-give{min-width:640px}
+.t-common td:nth-child(4){min-width:12em} .t-common td:nth-child(5){min-width:20em} .t-common td:nth-child(6){min-width:9em}
+.t-build td:nth-child(2){min-width:10em} .t-build td:nth-child(3){min-width:9em} .t-build td:nth-child(4){min-width:14em} .t-build td:nth-child(5){min-width:22em}
+.t-give td:nth-child(2){min-width:14em} .t-give td:nth-child(3){min-width:14em}
+.must{color:var(--accent);font-weight:700}
+.charge{display:block;margin-top:6px;font-size:13px;padding:4px 8px;border-radius:4px;background:var(--accent-soft)}
+.charge b{color:var(--accent)}
+.elem{display:block;margin-top:6px;font-size:13px}
+.elem b{color:var(--accent)}
+.elem.out{color:var(--muted)}
+.elem.out b{color:var(--muted)}
+.callout{background:var(--accent-soft);border-radius:6px;padding:12px 16px;font-size:14px}
+.callout b{color:var(--accent)}
+ul.plain{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px;max-width:75ch}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.cols>div{min-width:0;display:flex;flex-direction:column;gap:8px}
+h3{font-size:14px;margin:0;color:var(--accent);letter-spacing:.06em}
+a{color:var(--accent);overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ELDEN RING NIGHTREIGN ／ 復讐者</div>
+    <h1>復讐者の火力付帯</h1>
+    <p class="lead">祈祷を使う復讐者が味方から受け取りたい武器付帯の一覧です。付帯は6つの武器スロットに入っていれば手に持たなくても発動するので、聖印1本で戦い、残りの枠を付帯置き場にする前提で整理しています。</p>
+  </header>
+
+  <nav aria-label="章">
+    <a href="#common">共通付帯</a>
+    <a href="#build">ビルド別</a>
+    <a href="#give">譲り合い早見表</a>
+    <a href="#notes">前提</a>
+  </nav>
+
+  <section id="common">
+    <h2>共通付帯<small>全ビルドで欲しいもの</small></h2>
+    <div class="legend">
+      <span><b class="chip p1">◎</b>最優先</span>
+      <span><b class="chip p2">○</b>あると良い</span>
+      <span><b class="chip p3">△</b>1本で十分</span>
+      <span>倍率は付帯の段階ごとの値</span>
+    </div>
+    <div class="scroll"><table class="t-common">
+      <thead><tr><th>優先度</th><th>付帯効果</th><th>倍率</th><th>対象ビルド</th><th>理由</th><th>重複</th></tr></thead>
+      <tbody>
+        <tr><td><b class="chip p1">◎</b></td><td class="name">祈祷タメ強化</td><td class="rate">9％ / 13％ / 18％</td><td>祈祷タメが載る祈祷を使うビルド（例：獣爪）</td><td>祈祷タメ使用時の祈祷を強化。獣爪、雷の槍などに載る。<br>光輪・竜餐・狙いすます雷撃・雷撃には載らない</td><td>—</td></tr>
+        <tr><td><b class="chip p1">◎</b></td><td class="name">HP最大時攻撃力上昇</td><td class="rate">10％ / 14％</td><td>全ビルド</td><td>HP最大時のみ発動。後方から祈祷を撃つなら維持しやすいが、被弾すると切れやすい</td><td>—</td></tr>
+        <tr><td><b class="chip p1">◎</b></td><td class="name">祈祷強化</td><td class="rate">5％ / 8％ / 11％</td><td>全ビルド</td><td>祈祷のダメージ全体が上がる。属性を問わず腐らない</td><td>—</td></tr>
+        <tr><td><b class="chip p1">◎</b></td><td class="name">魔術/祈祷強化</td><td class="rate">6％ / 8％</td><td>全ビルド</td><td>祈祷のダメージ全体が上がる。属性を問わず腐らない</td><td>—</td></tr>
+        <tr><td><b class="chip p2">○</b></td><td class="name">属性攻撃力上昇</td><td class="rate">＋6％ / ＋9％ / ＋12％</td><td>聖祈祷、雷祈祷、炎祈祷、狂い火祈祷、属性付き竜餐祈祷</td><td>使う祈祷の属性に合ったものを選ぶ（聖・雷・炎など）</td><td>—</td></tr>
+        <tr><td><b class="chip p2">○</b></td><td class="name">魔術/祈祷、消費FP軽減</td><td class="rate none">—</td><td>全ビルド</td><td>自己FP回復手段がないため、実質的に手数（＝火力）が増える。序盤は優先度が高い</td><td>重複可</td></tr>
+        <tr><td><b class="chip p2">○</b></td><td class="name">最大FP上昇</td><td class="rate none">—</td><td>全ビルド</td><td>ガス欠対策</td><td>—</td></tr>
+        <tr><td><b class="chip p2">○</b></td><td class="name">詠唱速度</td><td class="rate">＋2</td><td>全ビルド</td><td>祈祷やボスによって必要となる場合がある</td><td>—</td></tr>
+        <tr><td><b class="chip p3">△</b></td><td class="name">敵撃破時、FP回復</td><td class="rate none">—</td><td>全ビルド</td><td>1本あれば十分。序盤は優先度が高い</td><td>重複しない</td></tr>
+        <tr><td><b class="chip p3">△</b></td><td class="name">別キャラの「無念」（信仰が上がるもの）</td><td class="rate none">—</td><td>全ビルド</td><td>復讐者は信仰S</td><td>同名の無念は重複しない／別名なら重複</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="build">
+    <h2>ビルド別<small>使う祈祷の属性で必須付帯が変わる</small></h2>
+    <div class="scroll"><table class="t-build">
+      <thead><tr><th>ビルド</th><th>主な祈祷・聖印</th><th>必須の火力付帯</th><th>併せて欲しい付帯</th><th>メモ</th></tr></thead>
+      <tbody>
+        <tr><td class="name">① 獣爪型</td><td>獣爪</td><td class="must">物理攻撃力上昇<br><span class="rate">8％ / 10％</span></td><td>魔術/祈祷強化、祈祷強化</td><td>獣爪は物理ダメージの祈祷なので、属性攻撃力上昇ではなく物理攻撃力上昇が有効</td></tr>
+        <tr><td class="name">② 聖祈祷型</td><td>光輪・黄金樹に誓って・回復</td><td class="must">聖攻撃力上昇</td><td>魔術/祈祷強化、属性攻撃力上昇、消費FP軽減（光輪は低コストで連発向き）</td><td>聖に強い相手に弱い。サブで別属性の祈祷も持ちたい<span class="charge"><b>祈祷タメ</b>　光輪は載らない</span></td></tr>
+        <tr><td class="name">③ 雷祈祷型</td><td>雷の槍・古竜系</td><td class="must">雷攻撃力上昇</td><td>魔術/祈祷強化、属性攻撃力上昇</td><td>雷の槍は祈祷タメで落雷が追加。雷耐性の低いボスで特に有効<span class="charge"><b>祈祷タメ</b>　雷の槍は載る／狙いすます雷撃・雷撃は載らない</span></td></tr>
+        <tr><td class="name">④ 炎・黒炎型</td><td>火投げ・黒炎・薙ぎ払う黒炎</td><td class="must">炎攻撃力上昇</td><td>魔術/祈祷強化、属性攻撃力上昇</td><td>薙ぎ払う黒炎は多数の敵に有効、黒炎は継続ダメージ</td></tr>
+        <tr><td class="name">⑤ 狂い火型</td><td>狂い火の聖印＋狂い火</td><td class="must">炎攻撃力上昇</td><td>魔術/祈祷強化、属性攻撃力上昇</td><td>術者自身にも発狂が蓄積する。上級者向け</td></tr>
+        <tr><td class="name">⑥ 竜餐型</td><td>竜餐の印＋ブレス系</td><td class="must">使うブレスの属性攻撃力上昇</td><td>属性攻撃力上昇（属性付きの竜餐祈祷のみ）、FP系付帯の優先度が高い（消費FPが重い）</td><td>竜餐祈祷には属性攻撃力上昇の対象外（物理）のものもある<span class="elem"><b>対象・炎</b>　竜炎／アギールの炎／溶岩ブレス／テオドリックスの溶岩</span><span class="elem"><b>対象・魔力</b>　輝石ブレス／スマラグの輝石／竜氷／ボレアリスの氷霧</span><span class="elem out"><b>対象外・物理</b>　竜爪／竜咬／グレイオールの咆哮／腐敗ブレス／エグズキスの腐敗</span><span class="elem out">プラキドサクスの滅びは属性未確認</span><span class="charge"><b>祈祷タメ</b>　竜餐は載らない</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="give">
+    <h2>譲り合い早見表<small>拾った付帯を誰に渡すか</small></h2>
+    <div class="scroll"><table class="t-give">
+      <thead><tr><th>拾った付帯・装備</th><th>渡す相手</th><th>補足</th></tr></thead>
+      <tbody>
+        <tr><td class="name">聖攻撃力上昇</td><td>② 聖祈祷型の復讐者へ</td><td></td></tr>
+        <tr><td class="name">雷攻撃力上昇</td><td>③ 雷祈祷型の復讐者へ</td><td></td></tr>
+        <tr><td class="name">炎攻撃力上昇</td><td>④ 炎・黒炎型／⑤ 狂い火型の復讐者へ</td><td></td></tr>
+        <tr><td class="name">物理攻撃力上昇</td><td>① 獣爪型の復讐者へ</td><td>近接の味方も欲しがるため、編成を見て調整</td></tr>
+        <tr><td class="name">魔術/祈祷強化</td><td>祈祷型の復讐者へ（ビルド問わず）</td><td></td></tr>
+        <tr><td class="name">魔術/祈祷、消費FP軽減</td><td>祈祷型の復讐者へ（重複可なので複数でも可）</td><td></td></tr>
+        <tr><td class="name">聖印以外の武器</td><td>味方へ</td><td>復讐者は聖印で枠が埋まるため</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout"><b>黄金樹に誓って</b>　周囲の味方を含め80秒間、与ダメージ+15%・被ダメージ-10%。付帯とは別枠でチーム火力を底上げできる祈祷です。</div>
+  </section>
+
+  <section id="notes">
+    <h2>前提</h2>
+    <ul class="plain">
+          <li>付帯効果は一部例外を除き、6つの武器スロットに入っていれば手に持たなくても発動する</li>
+          <li>大半の付帯は重複可。攻撃力上昇系はほぼ重複。「敵撃破時、FP回復」と同名の「無念」は重複しない</li>
+          <li>重複の確認はゲーム内「ステータス」メニューの特殊効果欄で可能</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>
